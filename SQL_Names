@@ -1,48 +1,233 @@
--- SQL_NAMES --
+		-- SQL_NAMES - ROSS KIMBERLIN - NSS DS5 --
 
 /* 
 # 1) Q - How many rows are in the names table?
 
-	 A - 
+	 A - 1,957,046.
 */
+
+SELECT COUNT(*)
+FROM names;
+
 
 /*
 # 2) Q - How many total registered people appear in the dataset?
 
+	 A - 351,653,025.
+*/
+
+SELECT SUM(num_registered)
+FROM names;
+
+
+/*
+# 3) Q - Which name had the most appearances in a single year in the dataset?
+	 
 	 A - 
 */
-Which name had the most appearances in a single year in the dataset?
 
-What range of years are included?
+SELECT year, name, COUNT(*) AS nm_cnt
+FROM names
+GROUP BY year, name
+ORDER BY nm_cnt DESC;
 
-What year has the largest number of registrations?
 
-How many different (distinct) names are contained in the dataset?
+/*
+# 4) Q - What range of years are included?
 
-Are there more males or more females registered?
+	 A - 1880 to 2018.
+*/
 
-What are the most popular male and female names overall (i.e., the most total registrations)?
+SELECT MAX(year), MIN(year)
+FROM names;
 
-What are the most popular boy and girl names of the first decade of the 2000s (2000 - 2009)?
+SELECT DISTINCT year	-- CHECKING TO SEE IF ANY YEARS ARE SKIPPED
+FROM names
+ORDER BY year;
 
-Which year had the most variety in names (i.e. had the most distinct names)?
 
-What is the most popular name for a girl that starts with the letter X?
+/*
+# 5) Q - What year has the largest number of registrations?
 
-How many distinct names appear that start with a 'Q', but whose second letter is not 'u'?
+	 A - 1957.
+*/
 
-Which is the more popular spelling between "Stephen" and "Steven"? Use a single query to answer this question.
+SELECT nr.year, MAX(nr.reg_sum) AS max_reg
+FROM 
+(
+	SELECT year, SUM(num_registered) AS reg_sum
+	FROM names
+	GROUP BY year
+) nr
+GROUP BY nr.year
+ORDER BY max_reg DESC;
 
-What percentage of names are "unisex" - that is what percentage of names have been used both for boys and for girls?
 
-How many names have made an appearance in every single year since 1880?
+/*
+# 6) Q - How many different (distinct) names are contained in the dataset?
 
-How many names have only appeared in one year?
+	 A - 98,400.
+*/
 
-How many names only appeared in the 1950s?
+SELECT COUNT(DISTINCT name)
+FROM names;
 
-How many names made their first appearance in the 2010s?
 
-Find the names that have not be used in the longest.
+/*
+# 7) Q - Are there more males or more females registered?
 
-Come up with a question that you would like to answer using this dataset. Then write a query to answer this question.
+	 A - More males are registered.
+*/
+
+SELECT gender, SUM(num_registered)
+FROM names
+GROUP BY gender;
+
+
+/*
+# 8) Q - What are the most popular male and female names overall 
+(i.e., the most total registrations)?
+
+	 A - 
+*/	 
+	
+	
+/*
+# 9) Q - What are the most popular boy and girl names of the first decade 
+of the 2000s (2000 - 2009)?
+
+	 A -
+*/
+
+
+/*
+# 10) Q - Which year had the most variety in names 
+(i.e. had the most distinct names)?
+
+	 A - 
+*/
+
+WITH cteYears AS 
+(
+	SELECT DISTINCT name, COUNT(DISTINCT name) AS name_cnt
+	FROM names
+	GROUP BY name
+	ORDER BY name_cnt DESC
+)
+SELECT year, MAX(name_cnt) AS max_cnt
+FROM cteYears
+GROUP BY year
+ORDER BY max_cnt DESC;
+
+
+/*
+# 11) Q - What is the most popular name for a girl 
+that starts with the letter X?
+
+	  A - Ximena.
+*/	  
+	  
+SELECT name, sum(num_registered) AS name_sum
+FROM names
+WHERE gender = 'F'
+	AND name LIKE 'X%'
+GROUP BY name
+ORDER BY name_sum DESC;
+	  
+
+/*
+# 12) Q - How many distinct names appear that start with a 'Q', 
+but whose second letter is not 'u'?
+
+	  A - 
+*/
+
+
+/*
+# 13) Q - Which is the more popular spelling between "Stephen" and "Steven"? 
+Use a single query to answer this question.
+
+	  A - Steven.
+*/	  
+
+SELECT name, sum(num_registered) AS sum_reg
+FROM names
+WHERE name = 'Stephen'
+	OR name = 'Steven'
+GROUP BY name	
+ORDER BY sum_reg DESC;
+
+
+/*
+# 14) Q - What percentage of names are "unisex" - that is what percentage 
+of names have been used both for boys and for girls?
+
+	  A - 
+*/
+
+
+/*
+# 15) Q - How many names have made an appearance in every single year since 1880?
+
+	  A - 
+*/	
+
+
+/*
+# 16) Q - How many names have only appeared in one year?
+
+	  A - 
+*/
+
+
+/*
+# 17) Q - How many names only appeared in the 1950s?
+
+	  A - 
+*/
+
+SELECT COUNT(DISTINCT name)
+FROM names
+WHERE NOT EXISTS
+(	
+	SELECT name
+	FROM names
+	WHERE year < 1961
+		AND year > 1950		-- I AM TREATING THE 1950s AS BEGINNING IN 1951
+);
+
+
+/*
+# 18) Q - How many names made their first appearance in the 2010s?
+
+	  A - 
+*/
+
+SELECT COUNT(DISTINCT name)
+FROM names
+WHERE NOT EXISTS
+(
+	SELECT name
+	FROM names
+	WHERE year < 2011		-- I AM TREATING THE 2010s AS BEGINNING IN 2011
+)
+-- GROUP BY name
+;
+
+
+/*
+# 19) Q - Find the names that have not be used in the longest.
+
+	  A - 
+*/
+
+
+
+/*
+# 20) Q - Come up with a question that you would like to answer using this dataset. 
+Then write a query to answer this question.
+
+	  A - 
+*/
+
+
