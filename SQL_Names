@@ -1,0 +1,48 @@
+-- SQL_NAMES --
+
+/* 
+# 1) Q - How many rows are in the names table?
+
+	 A - 
+*/
+
+/*
+# 2) Q - How many total registered people appear in the dataset?
+
+	 A - 
+*/
+Which name had the most appearances in a single year in the dataset?
+
+What range of years are included?
+
+What year has the largest number of registrations?
+
+How many different (distinct) names are contained in the dataset?
+
+Are there more males or more females registered?
+
+What are the most popular male and female names overall (i.e., the most total registrations)?
+
+What are the most popular boy and girl names of the first decade of the 2000s (2000 - 2009)?
+
+Which year had the most variety in names (i.e. had the most distinct names)?
+
+What is the most popular name for a girl that starts with the letter X?
+
+How many distinct names appear that start with a 'Q', but whose second letter is not 'u'?
+
+Which is the more popular spelling between "Stephen" and "Steven"? Use a single query to answer this question.
+
+What percentage of names are "unisex" - that is what percentage of names have been used both for boys and for girls?
+
+How many names have made an appearance in every single year since 1880?
+
+How many names have only appeared in one year?
+
+How many names only appeared in the 1950s?
+
+How many names made their first appearance in the 2010s?
+
+Find the names that have not be used in the longest.
+
+Come up with a question that you would like to answer using this dataset. Then write a query to answer this question.
