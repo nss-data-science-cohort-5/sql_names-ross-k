@@ -6,8 +6,8 @@
 	 A - 1,957,046.
 */
 
-SELECT COUNT(*)
-FROM names;
+	SELECT COUNT(*)
+	FROM names;
 
 
 /*
@@ -16,20 +16,23 @@ FROM names;
 	 A - 351,653,025.
 */
 
-SELECT SUM(num_registered)
-FROM names;
+	SELECT SUM(num_registered)
+	FROM names;
 
 
 /*
 # 3) Q - Which name had the most appearances in a single year in the dataset?
 	 
-	 A - 
+	 A - Linda
 */
 
-SELECT year, name, COUNT(*) AS nm_cnt
-FROM names
-GROUP BY year, name
-ORDER BY nm_cnt DESC;
+	SELECT name		-- CHRIS MULVEY'S CODE
+	FROM names
+	WHERE num_registered = 
+	(
+		SELECT MAX(num_registered) 
+		FROM names
+	);
 
 
 /*
@@ -38,12 +41,12 @@ ORDER BY nm_cnt DESC;
 	 A - 1880 to 2018.
 */
 
-SELECT MAX(year), MIN(year)
-FROM names;
-
-SELECT DISTINCT year	-- CHECKING TO SEE IF ANY YEARS ARE SKIPPED
-FROM names
-ORDER BY year;
+	SELECT MAX(year), MIN(year)
+	FROM names;
+	
+	--	SELECT DISTINCT year	-- CHECKING TO SEE IF ANY YEARS ARE SKIPPED
+	--	FROM names
+	--	ORDER BY year;
 
 
 /*
@@ -52,15 +55,19 @@ ORDER BY year;
 	 A - 1957.
 */
 
-SELECT nr.year, MAX(nr.reg_sum) AS max_reg
-FROM 
-(
-	SELECT year, SUM(num_registered) AS reg_sum
-	FROM names
-	GROUP BY year
-) nr
-GROUP BY nr.year
-ORDER BY max_reg DESC;
+	SELECT nr.year, MAX(nr.reg_sum) AS max_reg
+	FROM 
+	(
+		SELECT year, SUM(num_registered) AS reg_sum
+		FROM names
+		GROUP BY year
+	) nr
+	GROUP BY nr.year
+	ORDER BY max_reg DESC;
+	
+	-- COULD ALSO USE CHRIS MULVEY'S Q3 CODE, 
+	--   SELECT year FROM names WHERE num_registered = 
+	--         (SELECT MAX(num_registered) FROM names)
 
 
 /*
@@ -69,8 +76,8 @@ ORDER BY max_reg DESC;
 	 A - 98,400.
 */
 
-SELECT COUNT(DISTINCT name)
-FROM names;
+	SELECT COUNT(DISTINCT name)
+	FROM names;
 
 
 /*
@@ -79,45 +86,50 @@ FROM names;
 	 A - More males are registered.
 */
 
-SELECT gender, SUM(num_registered)
-FROM names
-GROUP BY gender;
+	SELECT gender, SUM(num_registered)
+	FROM names
+	GROUP BY gender;
 
 
 /*
 # 8) Q - What are the most popular male and female names overall 
 (i.e., the most total registrations)?
 
-	 A - 
+	 A - James (M) and Mary (F).
 */	 
 	
-	
+	SELECT name, gender, sum(num_registered) AS name_sum
+	FROM names
+	GROUP BY name, gender
+	ORDER BY name_sum DESC;
+
+
 /*
 # 9) Q - What are the most popular boy and girl names of the first decade 
 of the 2000s (2000 - 2009)?
 
-	 A -
+	 A - Jacob and Emily.
 */
+
+	SELECT name, gender, sum(num_registered) AS name_sum
+	FROM names
+	WHERE year > 1999
+		AND year < 2010
+	GROUP BY name, gender
+	ORDER BY name_sum DESC;
 
 
 /*
 # 10) Q - Which year had the most variety in names 
 (i.e. had the most distinct names)?
 
-	 A - 
+	 A - 2008
 */
 
-WITH cteYears AS 
-(
-	SELECT DISTINCT name, COUNT(DISTINCT name) AS name_cnt
+	SELECT DISTINCT year, COUNT(DISTINCT name) AS name_cnt
 	FROM names
-	GROUP BY name
-	ORDER BY name_cnt DESC
-)
-SELECT year, MAX(name_cnt) AS max_cnt
-FROM cteYears
-GROUP BY year
-ORDER BY max_cnt DESC;
+	GROUP BY year
+	ORDER BY name_cnt DESC;
 
 
 /*
@@ -127,20 +139,25 @@ that starts with the letter X?
 	  A - Ximena.
 */	  
 	  
-SELECT name, sum(num_registered) AS name_sum
-FROM names
-WHERE gender = 'F'
-	AND name LIKE 'X%'
-GROUP BY name
-ORDER BY name_sum DESC;
+	SELECT name, sum(num_registered) AS name_sum
+	FROM names
+	WHERE gender = 'F'
+		AND name LIKE 'X%'
+	GROUP BY name
+	ORDER BY name_sum DESC;
 	  
 
 /*
 # 12) Q - How many distinct names appear that start with a 'Q', 
 but whose second letter is not 'u'?
 
-	  A - 
+	  A - 46.
 */
+
+	SELECT COUNT(DISTINCT name)
+	FROM names
+	WHERE name LIKE 'Q%'
+		AND name NOT LIKE 'Qu%';
 
 
 /*
@@ -150,14 +167,24 @@ Use a single query to answer this question.
 	  A - Steven.
 */	  
 
-SELECT name, sum(num_registered) AS sum_reg
-FROM names
-WHERE name = 'Stephen'
-	OR name = 'Steven'
-GROUP BY name	
-ORDER BY sum_reg DESC;
+	SELECT name, sum(num_registered) AS sum_reg
+	FROM names
+	WHERE name = 'Stephen'
+		OR name = 'Steven'
+	GROUP BY name	
+	ORDER BY sum_reg DESC;
 
 
+	-- BRYAN HAD:
+	-- select case
+	--            when sum(t.stephen) > sum(t.steven) then 'Stephen is more popular'
+	--            when sum(t.stephen) < sum(t.steven) then 'Steven is more popular'
+	--            else 'They are equally popular' end as popularity
+	-- from (select case when name = 'Stephen' then num_registered else 0 end as stephen,
+	--              case when name = 'Steven' then num_registered else 0 end  as steven
+	--       from usa_names) as t;
+	  
+	  
 /*
 # 14) Q - What percentage of names are "unisex" - that is what percentage 
 of names have been used both for boys and for girls?
@@ -165,19 +192,120 @@ of names have been used both for boys and for girls?
 	  A - 
 */
 
+	-- TOTAL DATA SET HAS 98,400 DISTINCT NAMES.
+	SELECT COUNT(DISTINCT name)
+	FROM names;
+	
+	SELECT COUNT(DISTINCT name)		-- 67,698
+	FROM names
+	WHERE gender = 'F';
+	
+	SELECT COUNT(DISTINCT name)		-- 41,475
+	FROM names
+	WHERE gender = 'M';
+	
+	
+	SELECT DISTINCT name			-- 10,773
+	FROM names
+	WHERE gender = 'F'
+	INTERSECT
+	SELECT DISTINCT name	
+	FROM names
+	WHERE gender = 'M';
+	
+	
+	SELECT 10773.0 / 98400.0
+	
+	
+	SELECT COUNT(DISTINCT NAME) AS total_cnt,
+	
+	FROM names 
+		LEFT JOIN 
+		(
+		SELECT DISTINCT name
+		FROM names
+		WHERE gender = 'M'
+		INTERSECT
+		SELECT DISTINCT name
+		FROM names
+		WHERE gender = 'F'
+		) intsect_cnt
+		ON ,
+		(DISTINCT name
+		FROM names
+		WHERE gender = 'M'
+		INTERSECT
+		SELECT DISTINCT name
+		FROM names
+		WHERE gender = 'F'/ 
+		COUNT(DISTINCT NAME) ) AS pct
+	FROM names
+	-- GROUP BY name
+	;
+	
+	
+	-- ALEX HAD:
+	-- SELECT COUNT(unisex_counts)*100.00/COUNT(*)
+	-- FROM (SELECT CASE WHEN (COUNT( DISTINCT gender)>1) 
+	-- 			THEN 1 END AS unisex_counts
+	-- 		 FROM names
+	-- 		 GROUP BY name) AS unisex
+
+
+
+	-- CHRIS MULVEY HAD:
+	-- WITH male AS 
+	-- (
+	--		SELECT DISTINCT(name) AS distinct_name
+	-- 	  		FROM names
+	-- 	  		WHERE gender = 'M'
+	-- ),	 
+	-- 	 female AS 
+	-- (
+	-- 		SELECT DISTINCT(name) AS distinct_name
+	-- 		FROM names
+	-- 		WHERE gender = 'F'
+	-- 	)
+	-- SELECT
+	-- 	(COUNT(DISTINCT(f.distinct_name))::float / (SELECT COUNT(DISTINCT(name)) FROM names)) * 100
+	-- FROM female f
+	-- JOIN male m ON f.distinct_name = m.distinct_name
+	-- ;
+
+
+	-- BRYAN HAD:
+	
+	-- select count(distinct name) / 
+	--		(select count(distinct name) from usa_names)::float as percent_unisex
+	-- from usa_names
+	-- where name in
+	--      (select name from usa_names where gender = 'M')
+	--  	and name in
+	--      (select name from usa_names where gender = 'F');
+	  
 
 /*
 # 15) Q - How many names have made an appearance in every single year since 1880?
 
-	  A - 
+	  A - 921.
 */	
+
+	SELECT name, COUNT(DISTINCT year)
+	FROM names
+	GROUP BY name
+	HAVING COUNT(DISTINCT year) = 139;
 
 
 /*
 # 16) Q - How many names have only appeared in one year?
 
-	  A - 
+	  A - 21,123.
 */
+
+	SELECT name, COUNT(DISTINCT year)
+	FROM names
+	GROUP BY name
+	HAVING COUNT(DISTINCT year) = 1;
 
 
 /*
@@ -186,15 +314,15 @@ of names have been used both for boys and for girls?
 	  A - 
 */
 
-SELECT COUNT(DISTINCT name)
-FROM names
-WHERE NOT EXISTS
-(	
-	SELECT name
+	SELECT COUNT(DISTINCT name)
 	FROM names
-	WHERE year < 1961
-		AND year > 1950		-- I AM TREATING THE 1950s AS BEGINNING IN 1951
-);
+	WHERE NOT EXISTS
+	(	
+		SELECT name
+		FROM names
+		WHERE year < 1961
+			AND year > 1950		-- I AM TREATING THE 1950s AS BEGINNING IN 1951
+	);
 
 
 /*
@@ -203,16 +331,21 @@ WHERE NOT EXISTS
 	  A - 
 */
 
-SELECT COUNT(DISTINCT name)
-FROM names
-WHERE NOT EXISTS
-(
-	SELECT name
+	SELECT COUNT(DISTINCT name)
 	FROM names
-	WHERE year < 2011		-- I AM TREATING THE 2010s AS BEGINNING IN 2011
-)
--- GROUP BY name
-;
+	WHERE 
+	
+
+	--	SELECT COUNT(DISTINCT name)
+	--	FROM names
+	--	WHERE NOT EXISTS
+	--	(
+	--		SELECT name
+	--		FROM names
+	--		WHERE year < 2011		-- I AM TREATING THE 2010s AS BEGINNING IN 2011
+	--	)
+		-- GROUP BY name
+	--	;
 
 
 /*
