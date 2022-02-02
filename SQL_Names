@@ -336,14 +336,15 @@ Use a single query to answer this question.
 		  A - 11,270.
 */
 
-	SELECT COUNT(DISTINCT name) AS name_cnt
-	FROM names
+	SELECT COUNT(DISTINCT name) AS name_cnt	
+	FROM names								
 	WHERE name IN
 	(
 		SELECT name
 		FROM names
 		GROUP BY name
 		HAVING min(year) > 2009
+		-- DATA SET ONLY GOES UP THROUGH 2018
 	);
 
 
@@ -360,6 +361,8 @@ Use a single query to answer this question.
 	GROUP BY name
 	ORDER BY most_rec_year
 	LIMIT 10;
+
+	-- JOSHUA DID 2018 - MAX(year) AS "YEARS SINCE USED"
 
 
 /*
@@ -381,6 +384,7 @@ Use a single query to answer this question.
 	WHERE name IN ('Stephen', 'Steven')
 	GROUP BY name	
 	ORDER BY sum_reg DESC;
+
 
 "Sort  (cost=31266.61..31266.88 rows=109 width=15) (actual time=105.062..108.398 rows=2 loops=1)"
 "  Sort Key: (sum(num_registered)) DESC"
@@ -412,6 +416,7 @@ Use a single query to answer this question.
 	GROUP BY name	
 	ORDER BY sum_reg DESC;
 
+
 "Sort  (cost=33305.20..33305.47 rows=109 width=15) (actual time=98.488..102.113 rows=2 loops=1)"
 "  Sort Key: (sum(num_registered)) DESC"
 "  Sort Method: quicksort  Memory: 25kB"
@@ -434,22 +439,24 @@ Use a single query to answer this question.
 "Execution Time: 102.147 ms"
 
 
+
 	-- b) DOES Question 11 PERFORM DIFFERENTLY IF YOU MAKE
 	--		gender A BIT COLUMN?
 
 	ALTER TABLE names_test
-	ADD COLUMN gender_bit BIT(1) NULL;
+--	DROP COLUMN gender_bit	
+	ADD COLUMN gender_bool BOOL NULL;
 
 	UPDATE names_test
-	SET gender_bit = CAST(0 AS BIT)
+	SET gender_bool = FALSE
 	WHERE gender = 'F';
 	
 	UPDATE names_test
-	SET gender_bit = CAST(1 AS BIT)
+	SET gender_bool = TRUE
 	WHERE gender = 'M';	
 	
 	
-	EXPLAIN ANALYZE
+	EXPLAIN
 	SELECT name, sum(num_registered) AS reg_sum
 	FROM names_test
 	WHERE gender = 'F'
@@ -458,51 +465,93 @@ Use a single query to answer this question.
 	ORDER BY reg_sum DESC;
 
 
-	"Sort  (cost=33306.39..33306.68 rows=115 width=15) (actual time=88.498..91.062 rows=168 loops=1)"
-	"  Sort Key: (sum(num_registered)) DESC"
-	"  Sort Method: quicksort  Memory: 33kB"
-	"  ->  Finalize GroupAggregate  (cost=33288.90..33302.45 rows=115 width=15) (actual time=88.058..90.988 rows=168 loops=1)"
-	"        Group Key: name"
-	"        ->  Gather Merge  (cost=33288.90..33300.82 rows=96 width=15) (actual time=88.049..90.893 rows=351 loops=1)"
-	"              Workers Planned: 2"
-	"              Workers Launched: 2"
-	"              ->  Partial GroupAggregate  (cost=32288.88..32289.72 rows=48 width=15) (actual time=84.517..84.671 rows=117 loops=3)"
-	"                    Group Key: name"
-	"                    ->  Sort  (cost=32288.88..32289.00 rows=48 width=11) (actual time=84.500..84.545 rows=534 loops=3)"
-	"                          Sort Key: name"
-	"                          Sort Method: quicksort  Memory: 56kB"
-	"                          Worker 0:  Sort Method: quicksort  Memory: 46kB"
-	"                          Worker 1:  Sort Method: quicksort  Memory: 47kB"
-	"                          ->  Parallel Seq Scan on names_test  (cost=0.00..32287.54 rows=48 width=11) (actual time=38.468..84.101 rows=534 loops=3)"
-	"                                Filter: ((name ~~ 'X%'::text) AND (gender = 'F'::bpchar))"
-	"                                Rows Removed by Filter: 651814"
-	"Planning Time: 0.229 ms"
-	"Execution Time: 91.113 ms"
+"Sort  (cost=22914.13..22914.51 rows=152 width=15)"
+"  Sort Key: (sum(num_registered)) DESC"
+"  ->  GroupAggregate  (cost=22905.96..22908.62 rows=152 width=15)"
+"        Group Key: name"
+"        ->  Sort  (cost=22905.96..22906.34 rows=152 width=11)"
+"              Sort Key: name"
+"              ->  Bitmap Heap Scan on names_test  (cost=220.69..22900.45 rows=152 width=11)"
+"                    Filter: ((name ~~ 'X%'::text) AND (gender = 'F'::bpchar))"
+"                    ->  Bitmap Index Scan on name_ix  (cost=0.00..220.65 rows=13622 width=0)"
+"                          Index Cond: ((name >= 'X'::text) AND (name < 'Y'::text))"
+	
 	
 
-SELECT *
-FROM names_test
-LIMIT 10
-	
-	EXPLAIN ANALYZE
+	EXPLAIN
 	SELECT name, sum(num_registered) AS reg_sum
 	FROM names_test
---	WHERE gender_bit = 0
-		-- AND 
-	WHERE name LIKE 'X%'
+	WHERE gender_bool = FALSE
+		AND name LIKE 'X%'
 	GROUP BY name
-	HAVING bit_or(gender_bit) = 0
-	ORDER BY name_sum DESC;
+	ORDER BY reg_sum DESC;
 	
+
+"Sort  (cost=20036.10..20036.38 rows=113 width=15)"
+"  Sort Key: (sum(num_registered)) DESC"
+"  ->  GroupAggregate  (cost=20030.27..20032.25 rows=113 width=15)"
+"        Group Key: name"
+"        ->  Sort  (cost=20030.27..20030.55 rows=113 width=11)"
+"              Sort Key: name"
+"              ->  Bitmap Heap Scan on names_test  (cost=187.78..20026.41 rows=113 width=11)"
+"                    Filter: ((NOT gender_bool) AND (name ~~ 'X%'::text))"
+"                    ->  Bitmap Index Scan on name_ix  (cost=0.00..187.75 rows=10332 width=0)"
+"                          Index Cond: ((name >= 'X'::text) AND (name < 'Y'::text))"
+
 
 
 	-- c) WHAT IS THE COMBINATION OF THE FEWEST DISTINCT NAMES THAT WILL
 	--		TAKE A CONCATENATED FIELD ABOVE THE "TOAST" SIZE THRESHOLD?
 	
+	ALTER TABLE names_test
+	ADD COLUMN name_list TEXT NULL;
+
+	INSERT INTO name_list
+	SELECT 
+	(
+		SELECT string_agg(...)		-- PLUS generate_series?
+		FROM 
+	)
+
 	
 	
 	
+	-- d) IS THERE A DIFFERENCE IN PERFORMANCE BETWEEN
+	--		A FULL-TABLE SCAN ON names AND A btree INDEX ON names_test?
 	
-	-- d) (WHICH INDEXES PERFORM BEST FOR ...)
+	EXPLAIN
+	SELECT name
+	FROM names
+	WHERE name LIKE 'X%'
+	ORDER BY name;
+	
+"Gather Merge  (cost=23062.50..23081.17 rows=160 width=7)"
+"  Workers Planned: 2"
+"  ->  Sort  (cost=22062.48..22062.68 rows=80 width=7)"
+"        Sort Key: name"
+"        ->  Parallel Seq Scan on names  (cost=0.00..22059.95 rows=80 width=7)"
+"              Filter: (name ~~ 'X%'::text)"
+
+	
+	CREATE INDEX name_ix
+	ON names_test
+	USING btree(name);
+	
+	
+	EXPLAIN
+	SELECT name
+	FROM names_test
+	WHERE name LIKE 'X%'
+	ORDER BY name;
+	
+"Index Only Scan using name_ix on names_test  (cost=0.43..277.89 rows=193 width=7)"
+"  Index Cond: ((name >= 'X'::text) AND (name < 'Y'::text))"
+"  Filter: (name ~~ 'X%'::text)"
+
+
+
+	
+	
+	
 	
 	
